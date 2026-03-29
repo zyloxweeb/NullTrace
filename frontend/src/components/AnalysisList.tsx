@@ -1,88 +1,133 @@
 import type { AnalysisSummary } from "../types/analysis";
-import SeverityBadge from "./SeverityBadge";
 
 type Props = {
   analyses: AnalysisSummary[];
-  onSelect: (analysisId: string) => Promise<void>;
+  onSelect: (id: string) => Promise<void>;
 };
 
 function formatDate(value?: string) {
-  if (!value) return "N/A";
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleString("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function verdictStyle(severity: string): { color: string; bg: string; border: string } {
+  const s = severity?.toLowerCase();
+  if (s === "malicious" || s === "high" || s === "critical")
+    return { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.18)" };
+  if (s === "suspicious" || s === "medium")
+    return { color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.18)" };
+  return { color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.18)" };
 }
 
 export default function AnalysisList({ analyses, onSelect }: Props) {
   return (
-    <section className="bg-transparent p-3">
-      <div className="mb-5 px-2">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
+    <div style={{ padding: "16px" }}>
+      {/* header */}
+      <div className="mb-4">
+        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>
           Recent Cases
         </p>
-        <h3 className="text-2xl font-semibold tracking-tight text-white">
-          Navigator
-        </h3>
-        <p className="mt-2 text-sm leading-7 text-slate-400">
-          Open a previous case and continue the review.
-        </p>
+        <div className="flex items-center justify-between">
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#f1f0f5", margin: 0 }}>Navigator</h3>
+          <span style={{
+            fontSize: 11,
+            fontFamily: "'Fira Code', monospace",
+            color: "#52505f",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "2px 8px",
+            borderRadius: 6,
+          }}>
+            {analyses.length} records
+          </span>
+        </div>
       </div>
 
+      <div style={{ height: 1, background: "rgba(255,255,255,0.05)", marginBottom: 12 }} />
+
       {analyses.length === 0 ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-400">
-          No cases available.
+        <div style={{
+          border: "1px dashed rgba(255,255,255,0.07)",
+          borderRadius: 8,
+          padding: "20px",
+          textAlign: "center",
+          fontSize: 13,
+          color: "#52505f",
+        }}>
+          No cases in database
         </div>
       ) : (
-        <div className="space-y-3">
-          {analyses.map((analysis) => (
-            <button
-              key={analysis.analysis_id}
-              onClick={() => onSelect(analysis.analysis_id)}
-              className="block w-full rounded-2xl border border-slate-800 bg-slate-950/55 px-4 py-4 text-left transition hover:border-cyan-500/30 hover:bg-slate-900/80"
-            >
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-white">
-                    {analysis.filename}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {analyses.map((a) => {
+            const vs = verdictStyle(a.severity);
+            return (
+              <button
+                key={a.analysis_id}
+                onClick={() => onSelect(a.analysis_id)}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  background: "rgba(0,0,0,0.25)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  borderRadius: 8,
+                  padding: "12px 14px",
+                  cursor: "pointer",
+                  transition: "border-color 0.18s, background 0.18s",
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)";
+                  e.currentTarget.style.background = "rgba(124,58,237,0.04)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
+                  e.currentTarget.style.background = "rgba(0,0,0,0.25)";
+                }}
+              >
+                {/* top row */}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "#f1f0f5", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                    {a.filename}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {analysis.mime_type} • {analysis.file_category}
-                  </p>
+                  {/* verdict chip */}
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: vs.color,
+                    background: vs.bg,
+                    border: `1px solid ${vs.border}`,
+                    padding: "2px 8px",
+                    borderRadius: 99,
+                    flexShrink: 0,
+                  }}>
+                    {a.severity}
+                  </span>
                 </div>
 
-                <SeverityBadge severity={analysis.severity} />
-              </div>
+                {/* meta */}
+                <p style={{ fontSize: 11, color: "#52505f", margin: "0 0 10px 0" }}>
+                  {a.mime_type} · {a.file_category}
+                </p>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                    Score
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-white">
-                    {analysis.score}
+                {/* stats */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p style={{ fontSize: 10, color: "#52505f", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>Score</p>
+                    <p style={{ fontSize: 20, fontWeight: 700, color: vs.color, margin: 0, lineHeight: 1 }}>{a.score}</p>
+                  </div>
+                  <p style={{ fontSize: 11, color: "#52505f", fontFamily: "'Fira Code', monospace" }}>
+                    {formatDate(a.created_at)}
                   </p>
                 </div>
-
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                    Created
-                  </p>
-                  <p className="mt-1 text-sm text-slate-300">
-                    {formatDate(analysis.created_at)}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,457 +1,340 @@
 import type { AnalysisResult } from "../types/analysis";
-import SeverityBadge from "./SeverityBadge";
 import { motion } from "framer-motion";
 
-type Props = {
-  result: AnalysisResult | null;
-};
+type Props = { result: AnalysisResult | null };
 
-function AnimatedBlock({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) {
+function copy(text: string) { navigator.clipboard.writeText(text).catch(() => {}); }
+
+function scoreColor(s: number) {
+  if (s >= 75) return "#f87171";
+  if (s >= 40) return "#fbbf24";
+  return "#34d399";
+}
+
+function verdictStyle(v: string) {
+  const s = v?.toLowerCase();
+  if (s === "malicious" || s === "high" || s === "critical")
+    return { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)" };
+  if (s === "suspicious" || s === "medium")
+    return { color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.2)" };
+  return { color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.2)" };
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-    >
+    <div style={{
+      background: "rgba(0,0,0,0.3)",
+      border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 6,
+      padding: "6px 10px",
+      fontSize: 12,
+      color: "#9d9baf",
+      fontFamily: "'Fira Code', monospace",
+      wordBreak: "break-all",
+    }}>
       {children}
-    </motion.div>
-  );
-}
-
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text).catch(() => {});
-}
-
-function getScoreTone(score: number) {
-  if (score >= 75) return "from-red-500 to-red-300";
-  if (score >= 40) return "from-amber-400 to-yellow-200";
-  return "from-emerald-400 to-cyan-300";
-}
-
-function ScoreMeter({ score }: { score: number }) {
-  const width = Math.max(6, Math.min(score, 100));
-
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-            Threat Index
-          </p>
-          <p className="mt-2 text-4xl font-semibold text-white">{score}</p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-            Scale
-          </p>
-          <p className="mt-2 text-sm text-slate-300">0 — 100</p>
-        </div>
-      </div>
-
-      <div className="h-3 overflow-hidden rounded-full bg-slate-900">
-        <div
-          className={`h-full rounded-full bg-gradient-to-r ${getScoreTone(score)} transition-all duration-700`}
-          style={{ width: `${width}%` }}
-        />
-      </div>
-
-      <div className="mt-3 flex justify-between text-[11px] uppercase tracking-[0.18em] text-slate-600">
-        <span>Low</span>
-        <span>Medium</span>
-        <span>High</span>
-      </div>
     </div>
   );
 }
 
-function SmallStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function StatCard({ label, value, color, large }: { label: string; value: string | number; color?: string; large?: boolean }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-      <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-        {label}
-      </p>
-      <p className="mt-2 text-lg font-medium text-slate-200">{value}</p>
+    <div style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "12px 14px" }}>
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 6px 0" }}>{label}</p>
+      <p style={{ fontSize: large ? 28 : 16, fontWeight: 700, color: color ?? "#f1f0f5", margin: 0, lineHeight: 1 }}>{value}</p>
     </div>
   );
 }
 
-function Field({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string | number;
-  mono?: boolean;
-}) {
+function Section({ label, title, children }: { label: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-      <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-        {label}
-      </p>
-      <p
-        className={`mt-2 break-all text-sm text-slate-200 ${
-          mono ? "font-mono" : ""
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function EvidenceChip({ text }: { text: string }) {
-  return (
-    <div className="max-w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-      <p className="break-all whitespace-normal leading-6">{text}</p>
-    </div>
-  );
-}
-
-function Section({
-  eyebrow,
-  title,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-950/45 p-5">
-      <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-          {eyebrow}
-        </p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">
-          {title}
-        </h3>
-      </div>
+    <div style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "18px" }}>
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>{label}</p>
+      <h3 style={{ fontSize: 16, fontWeight: 600, color: "#f1f0f5", margin: "0 0 14px 0" }}>{title}</h3>
       {children}
-    </section>
+    </div>
+  );
+}
+
+function IOCGroup({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <p style={{ fontSize: 11, fontWeight: 600, color: "#52505f", margin: "0 0 8px 0", display: "flex", alignItems: "center", gap: 6 }}>
+        {label}
+        <span style={{ fontSize: 10, fontFamily: "'Fira Code', monospace", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 4, padding: "1px 6px", color: "#52505f" }}>
+          {items.length}
+        </span>
+      </p>
+      {items.length === 0 ? (
+        <p style={{ fontSize: 12, color: "#52505f" }}>None detected</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {items.slice(0, 8).map((item, i) => <Chip key={i}>{item}</Chip>)}
+          {items.length > 8 && <p style={{ fontSize: 11, color: "#52505f" }}>+{items.length - 8} more</p>}
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function AnalysisResult({ result }: Props) {
   if (!result) {
     return (
-      <section className="h-full rounded-[26px] bg-transparent p-4 md:p-5">
-        <div className="flex min-h-[640px] items-center justify-center rounded-[24px] border border-dashed border-slate-800 bg-slate-950/40 text-center">
-          <div className="max-w-md px-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-cyan-400">
-              Case Overview
-            </p>
-            <h3 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-              No case selected
-            </h3>
-            <p className="mt-3 text-base leading-7 text-slate-400">
-              Ingest a sample or open one of the recent cases from the navigator.
-            </p>
+      <div style={{ padding: "20px" }}>
+        <div style={{
+          minHeight: 440,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px dashed rgba(255,255,255,0.07)",
+          borderRadius: 10,
+          gap: 10,
+          textAlign: "center",
+          padding: 32,
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: 12,
+            background: "rgba(124,58,237,0.08)",
+            border: "1px solid rgba(124,58,237,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 4,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 3L3 7v8l8 4 8-4V7l-8-4z" stroke="#a78bfa" strokeWidth="1.4" strokeLinejoin="round" />
+              <path d="M11 3v12M3 7l8 4 8-4" stroke="#a78bfa" strokeWidth="1.4" strokeLinejoin="round" />
+            </svg>
           </div>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#9d9baf", margin: 0 }}>No case selected</h3>
+          <p style={{ fontSize: 13, color: "#52505f", margin: 0, maxWidth: 280, lineHeight: 1.6 }}>
+            Upload a sample or open a case from the navigator to begin analysis.
+          </p>
         </div>
-      </section>
+      </div>
     );
   }
 
-  const riskAssessment = result.risk_assessment ?? {
-    score: 0,
-    severity: "low",
-    reasons: [],
-  };
-  
+  const risk = result.risk_assessment ?? { score: 0, severity: "low", reasons: [] };
   const verdict = result.verdict ?? {
-  raw_risk_score: riskAssessment.score,
-  trust_score: 0,
-  final_score: riskAssessment.score,
-  verdict: riskAssessment.severity,
-  confidence: "low",
-  reasons: [],
+    raw_risk_score: risk.score, trust_score: 0, final_score: risk.score,
+    verdict: risk.severity, confidence: "low", reasons: [],
   };
-
-  const trustAssessment = result.trust_assessment ?? {
-    trust_score: 0,
-    is_likely_installer: false,
-    has_benign_cert_infrastructure: false,
-    matched_cert_keywords: [],
-    matched_installer_hints: [],
-    reasons: [],
-  };
-
-  const suspiciousPatterns = result.suspicious_patterns ?? [];
-  const iocs = result.iocs ?? {
-    urls: [],
-    ips: [],
-    emails: [],
-    domains: [],
-  };
+  const iocs = result.iocs ?? { urls: [], ips: [], emails: [], domains: [] };
   const strings = result.strings ?? [];
-
-  const totalIocs =
-    iocs.urls.length + iocs.ips.length + iocs.emails.length + iocs.domains.length;
+  const patterns = result.suspicious_patterns ?? [];
+  const totalIocs = iocs.urls.length + iocs.ips.length + iocs.emails.length + iocs.domains.length;
+  const color = scoreColor(verdict.final_score);
+  const vs = verdictStyle(verdict.verdict);
 
   return (
-    <section className="h-full rounded-[26px] bg-transparent p-4 md:p-5">
-      {/* HEADER */}
-      <AnimatedBlock delay={3}>
-        <div className="mb-6 rounded-3xl border border-slate-800 bg-slate-950/45 p-5">
-        <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-start 2xl:justify-between">
+    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* CASE HEADER */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "20px" }}
+      >
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-cyan-400">
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 6px 0" }}>
               Case File
             </p>
-
-            <h2 className="mt-3 truncate text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            <h2 style={{ fontSize: "clamp(18px, 3vw, 26px)", fontWeight: 700, color: "#f1f0f5", margin: "0 0 10px 0", wordBreak: "break-word" }}>
               {result.filename ?? "Unknown sample"}
             </h2>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-400">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 12, color: "#52505f" }}>
               <span>{result.mime_type ?? "unknown"}</span>
-              <span className="h-1 w-1 rounded-full bg-slate-700" />
+              <span>·</span>
               <span>{result.file_category ?? "unknown"}</span>
-              <span className="h-1 w-1 rounded-full bg-slate-700" />
-              <span>{result.size ?? 0} bytes</span>
-              {result.cached && (
-                <>
-                  <span className="h-1 w-1 rounded-full bg-slate-700" />
-                  <span className="text-cyan-300">cached result</span>
-                </>
-              )}
+              <span>·</span>
+              <span style={{ fontFamily: "'Fira Code', monospace" }}>{result.size ?? 0} B</span>
+              {result.cached && <><span>·</span><span style={{ color: "#a78bfa" }}>cached</span></>}
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <SeverityBadge severity={verdict.verdict} />
-            <button
-              onClick={() => copyToClipboard(result.sha256 ?? "")}
-              className="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-500/40 hover:bg-slate-900"
-            >
-              Copy SHA-256
-            </button>
-            <button
-              onClick={() => copyToClipboard(result.md5 ?? "")}
-              className="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-500/40 hover:bg-slate-900"
-            >
-              Copy MD5
-            </button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <div style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              background: vs.bg,
+              border: `1px solid ${vs.border}`,
+            }}>
+              <p style={{ fontSize: 10, color: "#52505f", margin: "0 0 2px 0" }}>Verdict</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: vs.color, margin: 0, textTransform: "capitalize" }}>
+                {String(verdict.verdict).replace("_", " ")}
+              </p>
+            </div>
+            {[
+              { label: "Copy SHA-256", value: result.sha256 ?? "" },
+              { label: "Copy MD5", value: result.md5 ?? "" },
+            ].map(({ label, value }) => (
+              <button key={label} onClick={() => copy(value)}
+                style={{
+                  fontSize: 12, fontWeight: 500, color: "#9d9baf",
+                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+                  transition: "all 0.18s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#f1f0f5"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.16)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#9d9baf"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
-      </AnimatedBlock>
+      </motion.div>
 
-      {/* SCORE + STATS */}
-      <div className="mb-6 space-y-4">
-        <ScoreMeter score={verdict.final_score} />
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <SmallStat label="Entropy" value={result.entropy ?? 0} />
-          <SmallStat label="Indicators" value={totalIocs} />
-          <SmallStat label="Patterns" value={suspiciousPatterns.length} />
+      {/* THREAT METER */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
+        style={{ background: "#0f0f18", border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 10, padding: "20px" }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>
+              Threat Index
+            </p>
+            <p style={{ fontSize: 56, fontWeight: 800, color, margin: 0, lineHeight: 1, letterSpacing: "-0.03em" }}>
+              {verdict.final_score}
+            </p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: 11, color: "#52505f", margin: 0 }}>Confidence</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#9d9baf", margin: "2px 0 0 0", textTransform: "capitalize" }}>
+              {verdict.confidence}
+            </p>
+          </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <SmallStat label="Raw Risk" value={verdict.raw_risk_score} />
-          <SmallStat label="Trust Score" value={verdict.trust_score} />
-          <SmallStat label="Confidence" value={verdict.confidence} />
+        <div style={{ height: 4, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden", marginBottom: 6 }}>
+          <motion.div
+            style={{ height: "100%", background: `linear-gradient(90deg, ${color}aa, ${color})`, borderRadius: 99 }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(verdict.final_score, 100)}%` }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          />
         </div>
-      </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#52505f" }}>
+          <span>Low</span><span>Medium</span><span>High</span>
+        </div>
 
-      {/* MAIN BODY */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        
-        <div className="space-y-6">
-          <Section eyebrow="Risk Narrative" title="Assessment Notes">
-            {riskAssessment.reasons.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No additional assessment notes available.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {riskAssessment.reasons.map((reason, index) => (
-                  <div
-                    key={index}
-                    className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4"
-                  >
-                    <p className="text-sm leading-7 text-slate-300">{reason}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
+        <div className="grid grid-cols-3 gap-3 mt-5">
+          <StatCard label="Raw Risk" value={verdict.raw_risk_score} color={color} large />
+          <StatCard label="Trust Score" value={verdict.trust_score} />
+          <StatCard label="Entropy" value={result.entropy ?? 0} />
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <StatCard label="Indicators" value={totalIocs} />
+          <StatCard label="Patterns" value={patterns.length} />
+          <StatCard label="Strings" value={strings.length} />
+        </div>
+      </motion.div>
 
-          <Section eyebrow="Technical Exhibits" title="Indicators of Compromise">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  URLs
-                </p>
-                <div className="mt-3 space-y-2">
-                  {iocs.urls.length ? (
-                    <>
-                      {iocs.urls.slice(0, 8).map((item, index) => (
-                        <EvidenceChip key={index} text={item} />
-                      ))}
-                      {iocs.urls.length > 8 && (
-                        <p className="text-sm text-slate-500">
-                          +{iocs.urls.length - 8} more URLs
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-slate-500">None</p>
-                  )}
-                </div>
-              </div>
+      {/* BODY GRID */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  IPs
-                </p>
-                <div className="mt-3 space-y-2">
-                  {iocs.ips.length ? (
-                    <>
-                      {iocs.ips.slice(0, 8).map((item, index) => (
-                        <EvidenceChip key={index} text={item} />
-                      ))}
-                      {iocs.ips.length > 8 && (
-                        <p className="text-sm text-slate-500">
-                          +{iocs.ips.length - 8} more IPs
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-slate-500">None</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  Emails
-                </p>
-                <div className="mt-3 space-y-2">
-                  {iocs.emails.length ? (
-                    <>
-                      {iocs.emails.slice(0, 8).map((item, index) => (
-                        <EvidenceChip key={index} text={item} />
-                      ))}
-                      {iocs.emails.length > 8 && (
-                        <p className="text-sm text-slate-500">
-                          +{iocs.emails.length - 8} more EMAILs
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-slate-500">None</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  Domains
-                </p>
-                <div className="mt-3 space-y-2">
-                  {iocs.domains.length ? (
-                    <>
-                      {iocs.domains.slice(0, 8).map((item, index) => (
-                        <EvidenceChip key={index} text={item} />
-                      ))}
-                      {iocs.domains.length > 8 && (
-                        <p className="text-sm text-slate-500">
-                          +{iocs.domains.length - 8} more Domains
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-slate-500">None</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Section>
-
-          <Section eyebrow="Evidence Fragments" title="Extracted Strings">
-            {strings.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No relevant strings were extracted.
-              </p>
-            ) : (
-              <div className="max-h-[360px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/65 p-3">
-                <div className="grid grid-cols-1 gap-2">
-                  {strings.slice(0, 40).map((str, index) => (
-                    <EvidenceChip key={index} text={str} />
+          {/* Assessment Notes */}
+          <Section label="Risk Narrative" title="Assessment Notes">
+            {risk.reasons.length === 0
+              ? <p style={{ fontSize: 13, color: "#52505f" }}>No additional notes.</p>
+              : <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {risk.reasons.map((r, i) => (
+                    <div key={i} style={{ borderLeft: "2px solid rgba(124,58,237,0.3)", paddingLeft: 12, fontSize: 13, color: "#9d9baf", lineHeight: 1.65 }}>
+                      {r}
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
+            }
+          </Section>
+
+          {/* IOCs */}
+          <Section label="Technical Exhibits" title="Indicators of Compromise">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <IOCGroup label="URLs" items={iocs.urls} />
+              <IOCGroup label="IPs" items={iocs.ips} />
+              <IOCGroup label="Emails" items={iocs.emails} />
+              <IOCGroup label="Domains" items={iocs.domains} />
+            </div>
+          </Section>
+
+          {/* Strings */}
+          <Section label="Evidence Fragments" title="Extracted Strings">
+            {strings.length === 0
+              ? <p style={{ fontSize: 13, color: "#52505f" }}>No strings extracted.</p>
+              : <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                  {strings.slice(0, 40).map((s, i) => <Chip key={i}>{s}</Chip>)}
+                </div>
+            }
           </Section>
         </div>
 
-        <div className="space-y-6">
-          <Section eyebrow="Pattern Analysis" title="Suspicious Indicators">
-            {suspiciousPatterns.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No suspicious patterns detected.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {suspiciousPatterns.map((item, index) => (
-                  <div
-                    key={`${item.pattern}-${index}`}
-                    className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
-                  >
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="break-all font-mono text-base text-cyan-300">
-                          {item.pattern}
-                        </p>
-                        <p className="mt-2 text-[10px] uppercase tracking-[0.22em] text-slate-500">
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Suspicious Patterns */}
+          <Section label="Pattern Analysis" title="Suspicious Indicators">
+            {patterns.length === 0
+              ? <p style={{ fontSize: 13, color: "#52505f" }}>No patterns detected.</p>
+              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {patterns.map((item, i) => {
+                    const ps = verdictStyle(item.severity);
+                    return (
+                      <div key={`${item.pattern}-${i}`} style={{
+                        background: ps.bg,
+                        border: `1px solid ${ps.border}`,
+                        borderRadius: 8,
+                        padding: "12px 14px",
+                      }}>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: ps.color, margin: 0, wordBreak: "break-all" }}>
+                            {item.pattern}
+                          </p>
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+                            color: ps.color, background: ps.bg, border: `1px solid ${ps.border}`,
+                            borderRadius: 99, padding: "2px 8px", flexShrink: 0,
+                          }}>
+                            {item.severity}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#52505f", margin: "0 0 6px 0" }}>
                           {item.category}
                         </p>
+                        <p style={{ fontSize: 13, color: "#9d9baf", margin: 0, lineHeight: 1.6 }}>{item.description}</p>
                       </div>
-
-                      <SeverityBadge severity={item.severity} />
-                    </div>
-
-                    <p className="text-sm leading-7 text-slate-300">
-                      {item.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+            }
           </Section>
 
-          <Section eyebrow="Fingerprint" title="Artifact Identity">
-            <div className="space-y-4">
-              <Field label="File name" value={result.filename ?? "Unknown"} />
-              <Field
-                label="MIME type"
-                value={result.mime_type ?? "application/octet-stream"}
-              />
-              <Field
-                label="Category"
-                value={result.file_category ?? "unknown"}
-              />
-              <Field label="SHA-256" value={result.sha256 ?? "N/A"} mono />
-              <Field label="MD5" value={result.md5 ?? "N/A"} mono />
+          {/* Identity */}
+          <Section label="Fingerprint" title="Artifact Identity">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { label: "Filename", value: result.filename ?? "—", mono: false },
+                { label: "MIME Type", value: result.mime_type ?? "—", mono: true },
+                { label: "Category", value: result.file_category ?? "—", mono: false },
+                { label: "SHA-256", value: result.sha256 ?? "—", mono: true },
+                { label: "MD5", value: result.md5 ?? "—", mono: true },
+              ].map(({ label, value, mono }) => (
+                <div key={label} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>{label}</p>
+                  <p style={{ fontFamily: mono ? "'Fira Code', monospace" : "inherit", fontSize: mono ? 11 : 13, color: "#9d9baf", margin: 0, wordBreak: "break-all" }}>
+                    {value}
+                  </p>
+                </div>
+              ))}
             </div>
           </Section>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
