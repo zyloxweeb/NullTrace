@@ -12,14 +12,28 @@ const LOG_STEPS = [
   { pct: 97, msg: "Generating verdict…" },
 ];
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB — must match backend
+const MAX_FILE_SIZE_LABEL = "50 MB";
+
 export default function FileUpload({ onUpload }: Props) {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
+    setSizeError(null);
+
+    // Client-side size guard
+    if (file.size > MAX_FILE_SIZE) {
+      setSizeError(
+        `File too large: ${(file.size / (1024 * 1024)).toFixed(1)} MB — maximum is ${MAX_FILE_SIZE_LABEL}.`
+      );
+      return;
+    }
+
     setSelectedFile(file);
     setLoading(true);
     setProgress(0);
@@ -47,6 +61,8 @@ export default function FileUpload({ onUpload }: Props) {
   };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) handleFile(e.target.files[0]);
+    // Reset input so same file can be re-selected after an error
+    e.target.value = "";
   };
 
   const pct = Math.min(Math.round(progress), 100);
@@ -84,9 +100,7 @@ export default function FileUpload({ onUpload }: Props) {
         >
           <div
             style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
+              width: 6, height: 6, borderRadius: "50%",
               background: loading ? "#fbbf24" : "#34d399",
             }}
           />
@@ -96,6 +110,35 @@ export default function FileUpload({ onUpload }: Props) {
         </div>
       </div>
 
+      {/* size error banner */}
+      <AnimatePresence>
+        {sizeError && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            style={{
+              background: "rgba(248,113,113,0.07)",
+              border: "1px solid rgba(248,113,113,0.22)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              marginBottom: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+              color: "#f87171",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+              <circle cx="7" cy="7" r="6.5" stroke="#f87171" strokeWidth="1" />
+              <path d="M7 4v3M7 9.5v.5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            {sizeError}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* dropzone */}
       <div
         onDrop={handleDrop}
@@ -104,9 +147,19 @@ export default function FileUpload({ onUpload }: Props) {
         onClick={() => !loading && inputRef.current?.click()}
         style={{
           position: "relative",
-          border: `1px dashed ${dragging ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.1)"}`,
+          border: `1px dashed ${
+            sizeError
+              ? "rgba(248,113,113,0.35)"
+              : dragging
+              ? "rgba(124,58,237,0.5)"
+              : "rgba(255,255,255,0.1)"
+          }`,
           borderRadius: 8,
-          background: dragging ? "rgba(124,58,237,0.04)" : "rgba(0,0,0,0.2)",
+          background: sizeError
+            ? "rgba(248,113,113,0.03)"
+            : dragging
+            ? "rgba(124,58,237,0.04)"
+            : "rgba(0,0,0,0.2)",
           padding: "36px 24px",
           textAlign: "center",
           cursor: loading ? "default" : "pointer",
@@ -123,14 +176,10 @@ export default function FileUpload({ onUpload }: Props) {
         {/* upload icon */}
         <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 10,
-            background: "rgba(124,58,237,0.1)",
-            border: "1px solid rgba(124,58,237,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 44, height: 44, borderRadius: 10,
+            background: sizeError ? "rgba(248,113,113,0.08)" : "rgba(124,58,237,0.1)",
+            border: `1px solid ${sizeError ? "rgba(248,113,113,0.2)" : "rgba(124,58,237,0.2)"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 14px",
           }}
         >
@@ -138,13 +187,16 @@ export default function FileUpload({ onUpload }: Props) {
             <div
               className="animate-spin-slow"
               style={{
-                width: 20,
-                height: 20,
-                borderRadius: "50%",
+                width: 20, height: 20, borderRadius: "50%",
                 border: "2px solid rgba(167,139,250,0.2)",
                 borderTopColor: "#a78bfa",
               }}
             />
+          ) : sizeError ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="#f87171" strokeWidth="1.5" />
+              <path d="M10 6v5M10 13.5v.5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
           ) : (
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 13V4M10 4L7 7M10 4l3 3" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -153,17 +205,19 @@ export default function FileUpload({ onUpload }: Props) {
           )}
         </div>
 
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#9d9baf", margin: "0 0 4px 0" }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: sizeError ? "#f87171" : "#9d9baf", margin: "0 0 4px 0" }}>
           {loading
             ? selectedFile?.name
-            : selectedFile
+            : selectedFile && !sizeError
             ? selectedFile.name
+            : sizeError
+            ? "File rejected — choose another"
             : "Drop file here or click to browse"}
         </p>
         <p style={{ fontSize: 12, color: "#52505f", margin: 0 }}>
           {loading
             ? "Static analysis in progress"
-            : "Any file type · local analysis only"}
+            : `Any file type · max ${MAX_FILE_SIZE_LABEL} · local analysis only`}
         </p>
       </div>
 
@@ -235,7 +289,7 @@ export default function FileUpload({ onUpload }: Props) {
         >
           {loading ? "Analyzing…" : "Analyze Artifact"}
         </button>
-        {selectedFile && !loading && (
+        {selectedFile && !loading && !sizeError && (
           <span style={{ fontSize: 11, color: "#52505f", fontFamily: "'Fira Code', monospace", whiteSpace: "nowrap" }}>
             {(selectedFile.size / 1024).toFixed(1)} KB
           </span>

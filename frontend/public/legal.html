@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Legal — NullTrace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090f;
+      --surface: #0f0f18;
+      --border: rgba(255,255,255,0.07);
+      --border-soft: rgba(255,255,255,0.04);
+      --text: #f1f0f5;
+      --muted: #9d9baf;
+      --dim: #52505f;
+      --accent: #a78bfa;
+      --accent-bg: rgba(124,58,237,0.10);
+      --accent-border: rgba(124,58,237,0.22);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* mesh bg */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 40% at 15% 0%, rgba(124,58,237,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 85% 100%, rgba(124,58,237,0.04) 0%, transparent 60%);
+      z-index: 0;
+    }
+
+    .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 24px 24px 80px; }
+
+    /* header */
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 22px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      animation: fadeDown 0.4s ease both;
+    }
+
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--accent); }
+
+    .back-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 14px;
+      text-decoration: none;
+      transition: color 0.18s, border-color 0.18s, background 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07); }
+
+    /* hero */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease 0.05s both;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 10px;
+    }
+    .hero h1 {
+      font-size: clamp(26px, 4vw, 40px); font-weight: 800;
+      color: var(--text); letter-spacing: -0.03em; line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 14px; color: var(--dim); max-width: 520px; line-height: 1.75; }
+    .hero-meta {
+      margin-top: 20px; padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; gap: 24px; flex-wrap: wrap;
+      font-size: 12px; color: var(--dim);
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-meta strong { color: var(--muted); font-weight: 500; }
+
+    /* nav tabs */
+    .doc-nav {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      animation: fadeUp 0.4s ease 0.1s both;
+    }
+    .doc-tab {
+      font-size: 13px; font-weight: 500;
+      padding: 8px 18px; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--dim);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: 'Outfit', sans-serif;
+      text-decoration: none;
+    }
+    .doc-tab:hover, .doc-tab.active {
+      color: var(--accent);
+      background: var(--accent-bg);
+      border-color: var(--accent-border);
+    }
+
+    /* document card */
+    .doc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 40px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.4s ease 0.12s both;
+    }
+
+    .doc-section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 6px;
+    }
+    .doc-title {
+      font-size: 22px; font-weight: 700; color: var(--text);
+      letter-spacing: -0.02em; margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .doc-section { margin-bottom: 32px; }
+    .doc-section:last-child { margin-bottom: 0; }
+
+    .doc-section h2 {
+      font-size: 14px; font-weight: 700; color: var(--accent);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .doc-section h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 14px;
+      background: var(--accent);
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .doc-section p {
+      font-size: 14px; color: var(--muted); line-height: 1.8;
+      margin-bottom: 10px;
+    }
+    .doc-section p:last-child { margin-bottom: 0; }
+
+    .doc-section ul {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .doc-section ul li {
+      font-size: 14px; color: var(--muted); line-height: 1.7;
+      padding-left: 20px; position: relative;
+    }
+    .doc-section ul li::before {
+      content: '›';
+      position: absolute; left: 0;
+      color: var(--accent); font-weight: 700;
+    }
+
+    .highlight-box {
+      background: rgba(124,58,237,0.06);
+      border: 1px solid rgba(124,58,237,0.16);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px; color: var(--muted);
+      line-height: 1.75;
+      margin-top: 14px;
+    }
+    .highlight-box strong { color: var(--accent); }
+
+    .warning-box {
+      background: rgba(251,191,36,0.05);
+      border: 1px solid rgba(251,191,36,0.18);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px; color: #d4a418;
+      line-height: 1.75;
+      margin-top: 14px;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .warning-box svg { flex-shrink: 0; margin-top: 2px; }
+
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--accent);
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 28px 0;
+    }
+
+    /* contact chip */
+    .contact-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px; color: var(--accent);
+      text-decoration: none;
+      transition: all 0.18s;
+      margin-top: 10px;
+    }
+    .contact-chip:hover { background: rgba(124,58,237,0.18); }
+
+    /* footer */
+    .page-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 12px; color: var(--dim);
+      animation: fadeUp 0.4s ease 0.2s both;
+    }
+    .page-footer a { color: var(--dim); text-decoration: none; transition: color 0.18s; }
+    .page-footer a:hover { color: var(--muted); }
+
+    /* animations */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* sections toggle */
+    .doc-block { display: none; }
+    .doc-block.active { display: block; }
+
+    @media (max-width: 600px) {
+      .doc-card { padding: 24px 20px; }
+      .hero { padding: 24px 20px; }
+      .doc-nav { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <a href="/" class="logo">Null<span>Trace</span></a>
+    <a href="/" class="back-btn">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to workspace
+    </a>
+  </div>
+
+  <!-- hero -->
+  <div class="hero">
+    <p class="hero-label">Legal &amp; Transparency</p>
+    <h1>How we handle <span>your data</span></h1>
+    <p>NullTrace is a personal project. This page explains clearly and honestly what happens to the files you upload — no legalese, no hidden clauses.</p>
+    <div class="hero-meta">
+      <span>📄 <strong>Last updated:</strong> May 2026</span>
+      <span>🌍 <strong>Jurisdiction:</strong> Italy / European Union (GDPR)</span>
+      <span>👤 <strong>Controller:</strong> Giuseppe Fattor (zylox)</span>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="doc-nav">
+    <button class="doc-tab active" onclick="showDocClick('privacy')">Privacy Policy</button>
+    <button class="doc-tab" onclick="showDocClick('terms')">Terms of Use</button>
+    <button class="doc-tab" onclick="showDocClick('cookies')">Cookie Policy</button>
+  </div>
+
+  <!-- ── PRIVACY POLICY ── -->
+  <div class="doc-block active" id="doc-privacy">
+    <div class="doc-card">
+      <p class="doc-section-label">Document 1 of 3</p>
+      <h1 class="doc-title">Privacy Policy</h1>
+
+      <div class="doc-section">
+        <h2>Who is responsible for your data</h2>
+        <p>The data controller is <strong style="color:#f1f0f5">Giuseppe Fattor</strong>, known online as <strong style="color:#f1f0f5">zylox</strong>, reachable at the contact address below. NullTrace is a personal, non-commercial project and is not operated by a company.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>What data we process</h2>
+        <p>When you upload a file for analysis, NullTrace processes the following:</p>
+        <ul>
+          <li><strong style="color:#f1f0f5">The file itself</strong> — used exclusively for static analysis (hashing, string extraction, IOC detection, pattern matching). It is never opened for reading content beyond what the analyzer requires.</li>
+          <li><strong style="color:#f1f0f5">Technical metadata</strong> derived from the file: SHA-256, MD5, MIME type, file size, entropy value, extracted strings, IOCs, suspicious patterns.</li>
+          <li><strong style="color:#f1f0f5">Your IP address</strong> — collected automatically by our hosting provider (Vercel) as part of standard HTTP request logs. We do not access or store these logs ourselves.</li>
+        </ul>
+        <div class="highlight-box">
+          <strong>Important:</strong> NullTrace does not collect your name, email, identity, or any other personal information. No account is required to use the service.
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <h2>How long we keep your data</h2>
+        <p>Uploaded files are <strong style="color:#f1f0f5">never stored on disk</strong>. They are read into memory, analyzed, and immediately discarded.</p>
+        <p>Analysis results (metadata derived from the file: hashes, MIME type, extracted strings, IOCs, patterns, verdict) are temporarily stored on our server as a JSON file to enable the session cache — this avoids re-analyzing the same file twice. These result files are <strong style="color:#f1f0f5">automatically deleted after 24 hours</strong>. No manual intervention is required; deletion is enforced at the infrastructure level on every new analysis request.</p>
+        <p>After 24 hours, no trace of your file or its analysis remains on our systems.</p>
+        <p>Server access logs (including IP addresses) are managed by Vercel according to their own retention policy, which is outside our control. You can review Vercel's privacy policy at <code>vercel.com/legal/privacy-policy</code>.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Legal basis for processing (GDPR Art. 6)</h2>
+        <p>The processing of your file and its derived metadata is based on <strong style="color:#f1f0f5">Article 6(1)(b) GDPR</strong> — processing necessary for the performance of the service you explicitly requested by uploading the file. No processing occurs without your active action.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Third-party services</h2>
+        <p>NullTrace is deployed on <strong style="color:#f1f0f5">Vercel Inc.</strong> (San Francisco, CA, USA), which acts as a data processor under a standard Data Processing Agreement. Vercel may temporarily process your IP and request data in accordance with their own privacy policy. No other third-party services are used. No analytics, no advertising, no tracking pixels, no social media integrations.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Data transfers outside the EU</h2>
+        <p>Vercel's infrastructure may route or process requests through servers located in the United States. This transfer is covered by Vercel's Standard Contractual Clauses (SCCs) with the European Commission, as required by GDPR Chapter V.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Your rights under GDPR</h2>
+        <p>As a user in the European Union, you have the following rights:</p>
+        <ul>
+          <li><strong style="color:#f1f0f5">Right of access</strong> — you can request information on what data we hold about you.</li>
+          <li><strong style="color:#f1f0f5">Right to erasure</strong> — you can request deletion of any data associated with you.</li>
+          <li><strong style="color:#f1f0f5">Right to restriction</strong> — you can request we limit processing of your data.</li>
+          <li><strong style="color:#f1f0f5">Right to object</strong> — you can object to processing at any time.</li>
+          <li><strong style="color:#f1f0f5">Right to lodge a complaint</strong> — you can file a complaint with the Italian data protection authority, the <strong style="color:#f1f0f5">Garante per la Protezione dei Dati Personali</strong> (<code>garanteprivacy.it</code>).</li>
+        </ul>
+        <p>Since we do not collect identifying information, exercising some rights may be limited in practice — we cannot identify which server logs correspond to you without additional information you provide.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Contact</h2>
+        <p>For any privacy-related inquiry or to exercise your rights:</p>
+        <a href="https://zylox.space" class="contact-chip" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#a78bfa" stroke-width="1.2"/><path d="M7 4v3l2 1" stroke="#a78bfa" stroke-width="1.2" stroke-linecap="round"/></svg>
+          zylox.space — contact page
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TERMS OF USE ── -->
+  <div class="doc-block" id="doc-terms">
+    <div class="doc-card">
+      <p class="doc-section-label">Document 2 of 3</p>
+      <h1 class="doc-title">Terms of Use</h1>
+
+      <div class="doc-section">
+        <h2>Nature of the service</h2>
+        <p>NullTrace is a <strong style="color:#f1f0f5">personal, experimental project</strong> created and maintained by Giuseppe Fattor (zylox) for educational and portfolio purposes. It performs static analysis of files uploaded by users, extracting technical indicators and producing a verdict based on heuristic scoring.</p>
+        <div class="warning-box">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L1.5 13.5h13L8 2z" stroke="#fbbf24" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 6v4M8 11.5v.5" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>NullTrace is currently in <strong>public beta</strong>. Results may be inaccurate, incomplete, or misleading. Do not use NullTrace as your sole source of truth for security decisions.</span>
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <h2>Acceptable use</h2>
+        <p>By using NullTrace, you agree to the following:</p>
+        <ul>
+          <li>You will only upload files you own or have explicit authorization to analyze.</li>
+          <li>You will not use NullTrace to analyze files for the purpose of evading detection or improving malware.</li>
+          <li>You will not attempt to abuse, overload, reverse-engineer, or attack the NullTrace infrastructure.</li>
+          <li>You will not upload files containing illegal content (e.g., CSAM, classified materials).</li>
+          <li>You understand that analysis results are heuristic estimates, not definitive security verdicts.</li>
+        </ul>
+      </div>
+
+      <div class="doc-section">
+        <h2>Disclaimer of warranties</h2>
+        <p>NullTrace is provided <strong style="color:#f1f0f5">"as is"</strong>, without warranty of any kind, express or implied. This includes, but is not limited to, warranties of merchantability, fitness for a particular purpose, accuracy of analysis results, or uninterrupted availability of the service.</p>
+        <p>Static analysis is inherently limited. NullTrace does not execute files, does not perform dynamic analysis, and cannot detect all forms of malicious behavior. A "benign" verdict does not guarantee a file is safe.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Limitation of liability</h2>
+        <p>To the maximum extent permitted by applicable law, Giuseppe Fattor (zylox) shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of NullTrace or reliance on its analysis results. This includes but is not limited to: security incidents, data loss, malware infection, or business interruption.</p>
+        <p>You use this service entirely at your own risk.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Intellectual property</h2>
+        <p>NullTrace is released under the <strong style="color:#f1f0f5">MIT License</strong>. The source code is available on GitHub. You are free to fork, modify, and self-host the project in accordance with the license terms. The name "NullTrace" and associated visual identity are personal creative work of Giuseppe Fattor.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Service availability</h2>
+        <p>NullTrace is a personal project with no SLA or uptime guarantee. The service may be taken offline, modified, or discontinued at any time without notice. We recommend not relying on NullTrace for time-sensitive or mission-critical tasks.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Governing law</h2>
+        <p>These terms are governed by the laws of the <strong style="color:#f1f0f5">Italian Republic</strong> and, where applicable, the law of the European Union. Any disputes shall be subject to the jurisdiction of the competent courts of Italy.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Changes to these terms</h2>
+        <p>These terms may be updated at any time. The date shown at the top of the legal page reflects the most recent revision. Continued use of NullTrace after changes constitutes acceptance of the updated terms.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── COOKIE POLICY ── -->
+  <div class="doc-block" id="doc-cookies">
+    <div class="doc-card">
+      <p class="doc-section-label">Document 3 of 3</p>
+      <h1 class="doc-title">Cookie Policy</h1>
+
+      <div class="doc-section">
+        <h2>Our cookie usage</h2>
+        <p>NullTrace <strong style="color:#f1f0f5">does not use cookies</strong> for tracking, analytics, advertising, or any other purpose. No first-party cookies are set by this application.</p>
+        <div class="highlight-box">
+          <strong>TL;DR:</strong> We don't use cookies. We don't track you. We don't know who you are.
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <h2>Third-party and infrastructure cookies</h2>
+        <p>Our hosting provider, <strong style="color:#f1f0f5">Vercel</strong>, may set technical cookies or use similar storage mechanisms as part of their infrastructure (e.g., for routing or security). These are outside our control and are covered by Vercel's own Cookie Policy.</p>
+        <p>Your browser itself may store data locally (e.g., cached assets). This is standard browser behavior and does not constitute tracking.</p>
+      </div>
+
+      <div class="doc-section">
+        <h2>Local storage</h2>
+        <p>NullTrace may use browser <code>localStorage</code> or <code>sessionStorage</code> to temporarily retain analysis state during your session (e.g., last loaded result). This data:</p>
+        <ul>
+          <li>Never leaves your browser.</li>
+          <li>Is not transmitted to any server.</li>
+          <li>Is cleared when you close your browser tab or clear browser data.</li>
+        </ul>
+      </div>
+
+      <div class="doc-section">
+        <h2>Your choices</h2>
+        <p>You can clear any locally stored data at any time through your browser settings. Since we do not set tracking cookies, there is no cookie consent banner required — and we intend to keep it that way.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="page-footer">
+    <span>© 2026 Giuseppe Fattor · <a href="https://zylox.space">zylox.space</a></span>
+    <span>NullTrace · MIT License · <a href="https://github.com/zyloxweeb/NullTrace" target="_blank">GitHub</a></span>
+  </div>
+
+</div>
+
+<script>
+  function showDoc(id, fromClick) {
+    document.querySelectorAll('.doc-block').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.doc-tab').forEach(el => el.classList.remove('active'));
+    const block = document.getElementById('doc-' + id);
+    if (!block) return;
+    block.classList.add('active');
+    const tabs = document.querySelectorAll('.doc-tab');
+    const map = { privacy: 0, terms: 1, cookies: 2 };
+    if (tabs[map[id]]) tabs[map[id]].classList.add('active');
+    if (fromClick) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // read ?doc= param on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const doc = params.get('doc');
+    if (doc && ['privacy','terms','cookies'].includes(doc)) {
+      showDoc(doc, false);
+    }
+  });
+
+  // expose to onclick
+  window.showDocClick = function(id) {
+    showDoc(id, true);
+  }
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import FileUpload from "./components/FileUpload";
 import AnalysisResult from "./components/AnalysisResult";
 import AnalysisList from "./components/AnalysisList";
 import SplashScreen from "./components/SplashScreen";
+import Footer from "./components/Footer";
 import { analyzeFile, fetchAnalyses, fetchAnalysisById } from "./services/api";
 import type { AnalysisResult as AnalysisResultType, AnalysisSummary } from "./types/analysis";
 
@@ -50,6 +51,7 @@ export default function App() {
   const vc = verdictColor(activeVerdict);
 
   const NAV = [
+    { label: "Home", href: "https://zylox.space", home: true },
     { label: "New Analysis", onClick: () => document.getElementById("upload-panel")?.scrollIntoView({ behavior: "smooth" }), accent: true },
     { label: "API Docs", href: "http://127.0.0.1:8000/docs" },
     { label: "GitHub", href: "https://github.com/zyloxweeb" },
@@ -141,16 +143,38 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-2">
                   {NAV.map((btn) =>
                     btn.href ? (
-                      <a key={btn.label} href={btn.href} target="_blank" rel="noreferrer"
+                      <a
+                        key={btn.label}
+                        href={btn.href}
+                        target={btn.home ? "_self" : "_blank"}
+                        rel={btn.home ? undefined : "noreferrer"}
                         style={{
-                          fontSize: 12, fontWeight: 500, color: "#9d9baf",
-                          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: 8, padding: "7px 14px", textDecoration: "none",
-                          fontFamily: "'Outfit', sans-serif", transition: "all 0.18s", display: "inline-block",
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: btn.home ? "#f1f0f5" : "#9d9baf",
+                          background: btn.home ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
+                          border: btn.home ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8,
+                          padding: "7px 14px",
+                          textDecoration: "none",
+                          fontFamily: "'Outfit', sans-serif",
+                          transition: "all 0.18s",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#f1f0f5"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#9d9baf"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#f1f0f5"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.background = "rgba(255,255,255,0.09)"; }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = btn.home ? "#f1f0f5" : "#9d9baf";
+                          e.currentTarget.style.borderColor = btn.home ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)";
+                          e.currentTarget.style.background = btn.home ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)";
+                        }}
                       >
+                        {btn.home && (
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+                            <path d="M1 5.5L6 1l5 4.5V11H8V8H4v3H1V5.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
+                          </svg>
+                        )}
                         {btn.label}
                       </a>
                     ) : (
@@ -235,73 +259,70 @@ export default function App() {
           </motion.div>
 
           {/* ── MAIN LAYOUT ── */}
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Sidebar disabled — will be re-enabled when user auth/db is ready */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <motion.div id="upload-panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.1 }}>
+              <FileUpload onUpload={handleUpload} />
+            </motion.div>
 
-            {/* main column */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <motion.div id="upload-panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.1 }}>
-                <FileUpload onUpload={handleUpload} />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.42, delay: 0.15 }}
-                style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}
-              >
-                <AnalysisResult result={result} />
-              </motion.div>
-            </div>
-
-            {/* sidebar */}
-            <aside style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {/* active case panel */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.38, delay: 0.1 }}
-                style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "18px" }}
-              >
-                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 14px 0" }}>
-                  Active Case
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    { label: "Target", value: activeFilename ?? "No sample loaded", mono: false, color: activeFilename ? "#f1f0f5" : "#52505f" },
-                    { label: "Verdict", value: activeVerdict ? String(activeVerdict).replace("_", " ") : "—", mono: false, color: vc, caps: true },
-                    { label: "Score", value: activeScore !== null ? String(activeScore) : "—", mono: false, color: vc, large: true },
-                    { label: "SHA-256", value: activeSHA ?? "—", mono: true, color: "#52505f" },
-                  ].map(({ label, value, mono, color, caps, large }) => (
-                    <div key={label} style={{
-                      background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.05)",
-                      borderRadius: 8, padding: "10px 12px",
-                    }}>
-                      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>{label}</p>
-                      <p style={{
-                        fontFamily: mono ? "'Fira Code', monospace" : "'Outfit', sans-serif",
-                        fontSize: large ? 26 : mono ? 11 : 13,
-                        fontWeight: large ? 800 : mono ? 400 : 500,
-                        color, margin: 0, wordBreak: "break-all", lineHeight: large ? 1 : 1.4,
-                        textTransform: caps ? "capitalize" : "none",
-                      }}>
-                        {value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* navigator */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.42, delay: 0.14 }}
-                style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}
-              >
-                <AnalysisList analyses={analyses} onSelect={handleSelect} />
-              </motion.div>
-            </aside>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.42, delay: 0.15 }}
+              style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}
+            >
+              <AnalysisResult result={result} />
+            </motion.div>
           </div>
+
+          {/* ── SIDEBAR (disabled — re-enable when auth/db is ready) ── */}
+          <aside style={{ display: "none" }}>
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.38, delay: 0.1 }}
+              style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "18px" }}
+            >
+              <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 14px 0" }}>
+                Active Case
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  { label: "Target", value: activeFilename ?? "No sample loaded", mono: false, color: activeFilename ? "#f1f0f5" : "#52505f" },
+                  { label: "Verdict", value: activeVerdict ? String(activeVerdict).replace("_", " ") : "—", mono: false, color: vc, caps: true },
+                  { label: "Score", value: activeScore !== null ? String(activeScore) : "—", mono: false, color: vc, large: true },
+                  { label: "SHA-256", value: activeSHA ?? "—", mono: true, color: "#52505f" },
+                ].map(({ label, value, mono, color, caps, large }) => (
+                  <div key={label} style={{
+                    background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.05)",
+                    borderRadius: 8, padding: "10px 12px",
+                  }}>
+                    <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#52505f", margin: "0 0 4px 0" }}>{label}</p>
+                    <p style={{
+                      fontFamily: mono ? "'Fira Code', monospace" : "'Outfit', sans-serif",
+                      fontSize: large ? 26 : mono ? 11 : 13,
+                      fontWeight: large ? 800 : mono ? 400 : 500,
+                      color, margin: 0, wordBreak: "break-all", lineHeight: large ? 1 : 1.4,
+                      textTransform: caps ? "capitalize" : "none",
+                    }}>
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.42, delay: 0.14 }}
+              style={{ background: "#0f0f18", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}
+            >
+              <AnalysisList analyses={analyses} onSelect={handleSelect} />
+            </motion.div>
+          </aside>
+          
+          <Footer />
         </div>
       </div>
     </>
